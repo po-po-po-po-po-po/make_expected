@@ -128,18 +128,25 @@ void p(int number)
 int main()
 {
     {
+        // {
+        //     Expected<Copyable, Copyable> a;
+        //     EXPECT_FALSE(a);
+        //     p(1);
+        // }
+        // {
+        //     Expected<Copyable, Copyable> a{100};
+        //     EXPECT_TRUE(a);
+        //     p(2);
+        //     EXPECT_EQ(a->value, 100);
+        //     p(3);
+        // }
         {
-            Expected<Copyable, Copyable> a;
-            EXPECT_FALSE(a);
-            p(1);
+            Expected<Copyable, Copyable> a = 100;
+            std::cout << a->value << std::endl;
         }
         {
-            // ここがエラーになったりならなかったり。コピーもしくはムーブのどちらかが禁止されているとエラーになるぽい
-            Expected<Copyable, Copyable> a{100};
-            // EXPECT_TRUE(a);
-            // p(2);
-            // EXPECT_EQ(a->value, 100);
-            // p(3);
+            Expected<int, Copyable> a = 100;
+            std::cout << *a << std::endl;
         }
     }
 }

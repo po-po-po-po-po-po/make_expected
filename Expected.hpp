@@ -77,18 +77,18 @@ public:
     Expected(Unexpected<E2>&& error) noexcept(std::is_nothrow_move_constructible<E2>::value)
         : _hasValue(false)
     {
-        std::cout << "error-konnsutorakuta" << std::endl;
+        std::cout << this << " : Expected : error constructed" << std::endl;
         setError(std::forward(error.error()));
     }
 
 
     // 正常値の場合のコンストラクタ
-    template <typename T2,
-        typename std::enable_if<std::is_constructible<T, T2>::value, std::nullptr_t>::type = nullptr>
+    template <typename T2 = T,
+        typename std::enable_if<not std::is_same<typename std::remove_cv<typename std::remove_reference<T2>::type>::type, Expected>::value && std::is_constructible<T, T2>::value, std::nullptr_t>::type = nullptr>
     Expected(T2&& value) noexcept(std::is_nothrow_constructible<T2>::value)
         : _hasValue(true)
     {
-        std::cout << value << "value-konnsutorakuta" << std::endl;
+        std::cout << this << " : Expected : value constructed type = " << typeid(value).name() << std::endl;
         setValue(std::forward<T2>(value));
     }
 
@@ -96,20 +96,14 @@ public:
     // デストラクタ
     ~Expected() noexcept
     {
-        std::cout << "destorakuta~" << std::endl;
+        std::cout << this << " : Expected : destructed" << std::endl;
         reset();
     }
 
-
-    // コピーコンストラクタ
-    template <typename T2, typename E2,
-        typename std::enable_if<std::is_constructible<T, const T2&>::value && std::is_constructible<E, const E2&>::value, std::nullptr_t>::type = nullptr>
-    Expected(const Expected<T2, E2>& other) noexcept(
-        std::is_nothrow_copy_constructible<T2>::value && 
-        std::is_nothrow_copy_constructible<E2>::value)
+    Expected(const Expected& other)
         : _hasValue(other._hasValue)
     {
-        std::cout << "kopi-konnsutorakuta2" << std::endl;
+        std::cout << this << " : Expected : copy constructed" << std::endl;
         if (_hasValue)
         {
             setValue(other._storage.value);
@@ -120,6 +114,57 @@ public:
         }
     }
 
+private:
+
+    template <typename U>
+    using remove_cvref_t = typename std::remove_cv<typename std::remove_reference<U>::type>::type;
+
+    template <typename U, typename std::enable_if<std::is_move_constructible<remove_cvref_t<U>>::value, std::nullptr_t>::type = nullptr>
+    static auto MoveConstruct(U&& obj) -> decltype(std::move(obj))
+    {
+        return std::move(obj);
+    }
+
+    template <typename U, typename std::enable_if<not std::is_move_constructible<remove_cvref_t<U>>::value, std::nullptr_t>::type = nullptr>
+    static auto MoveConstruct(U&& obj) -> decltype(obj)
+    {
+        return obj;
+    }
+
+public:
+
+    Expected(Expected&& other) noexcept
+        : _hasValue(other._hasValue)
+    {
+        std::cout << this << " : Expected : move constructed" << std::endl;
+        if (_hasValue)
+        {
+            setValue(MoveConstruct(other._storage.value));
+        }
+        else
+        {
+            setError(MoveConstruct(other._storage.error));
+        }
+    }
+
+    // コピーコンストラクタ
+    template <typename T2, typename E2,
+        typename std::enable_if<std::is_constructible<T, const T2&>::value && std::is_constructible<E, const E2&>::value, std::nullptr_t>::type = nullptr>
+    Expected(const Expected<T2, E2>& other) noexcept(
+        std::is_nothrow_copy_constructible<T2>::value && 
+        std::is_nothrow_copy_constructible<E2>::value)
+        : _hasValue(other._hasValue)
+    {
+        std::cout << this << " : Expected : copy constructed2" << std::endl;
+        if (_hasValue)
+        {
+            setValue(other._storage.value);
+        }
+        else
+        {
+            setError(other._storage.error);
+        }
+    }
 
     // ムーブコンストラクタ
     template <typename T2, typename E2,
@@ -129,7 +174,7 @@ public:
         std::is_nothrow_move_constructible<E2>::value)
         :_hasValue(other._hasValue)
     {
-        std::cout << "move-konnsutorakuta" << std::endl;
+        std::cout << "move constructed" << std::endl;
         if (_hasValue)
         {
             setValue(std::move(other._storage.value));
@@ -179,7 +224,7 @@ public:
 
     // エラー値を代入するときはunexpectedにラップして代入する
     template <typename E2>
-    constexpr Expected& operator=(Unexpected<E2>&& error)
+    Expected& operator=(Unexpected<E2>&& error)
     {
         reset();
 
@@ -192,7 +237,7 @@ public:
 
 
     // 正常値を直接代入できるようにする
-    constexpr Expected& operator=(T&& value) noexcept(std::is_nothrow_move_constructible<T>::value)
+    Expected& operator=(T&& value) noexcept(std::is_nothrow_move_constructible<T>::value)
     {
         reset();
 
@@ -497,7 +542,7 @@ private:
     template <typename U>
     void setValue(U&& value) noexcept
     {
-        std::cout << value << std::endl;
+        // std::cout << value << std::endl;
         new (&_storage.value) T(std::forward<U>(value));
     }
 

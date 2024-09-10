@@ -24,12 +24,19 @@ struct Copyable
     int value;
 
     Copyable(int value = 0)
-        : value(value){};
+        : value(value)
+    {
+        std::cout << this << " : Copyable : constructed " << std::endl;
+    };
 
-    ~Copyable() noexcept {};
+    ~Copyable() noexcept {
+        std::cout << this << " : Copyable : destructed " << std::endl;
+    };
 
     Copyable(const Copyable& other)
-        : value(other.value){};
+        : value(other.value){
+            std::cout << this << " : Copyable : copy constructed " << std::endl;
+        };
 
     Copyable(Copyable&&) noexcept = delete;
 
@@ -124,6 +131,14 @@ void p(int number)
 {
     std::cout << "now : " << number << std::endl;
 }
+#include <cstdint>
+#include <Udon.hpp>
+
+
+Udon::Optional<Copyable> ff() 
+{
+    return 1000;
+}
 
 int main()
 {
@@ -140,13 +155,16 @@ int main()
         //     EXPECT_EQ(a->value, 100);
         //     p(3);
         // }
+        // {
+        //     Expected<Copyable, Copyable> a = 100;
+        //     std::cout << a->value << std::endl;
+        // }
+
         {
-            Expected<Copyable, Copyable> a = 100;
+            // Expected<Copyable, int> a = 100;
+            // Expected<Copyable, int> a = Expected<Copyable, int>{100};
+            Expected<Copyable, int> a = 100;
             std::cout << a->value << std::endl;
-        }
-        {
-            Expected<int, Copyable> a = 100;
-            std::cout << *a << std::endl;
         }
     }
 }
